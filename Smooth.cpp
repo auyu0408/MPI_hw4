@@ -46,7 +46,7 @@ int main(int argc,char *argv[])
 /*  endwtime     ： 記錄結束時間                         */
 /*********************************************************/
 	char *infileName = "input.bmp";
-    char *outfileName = "output.bmp";
+        char *outfileName = "output.bmp";
 	double startwtime = 0.0, endwtime=0;
 
 	//MPI_Init(&argc,&argv);
