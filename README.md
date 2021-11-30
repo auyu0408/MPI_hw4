@@ -2,6 +2,16 @@
 
 E94086107 張娟鳴
 
+## File
+
+- bmp.h: bmp picture headerfile   
+- Smooth.cpp: original bmp picture smooth file  
+- input.bmp: picture we want to smooth
+- hw4.cpp: program that use `busy waiting and mutex` to complete  
+- hw4_bar.cpp: program that use `pthread_barrier_wait()` to complete  
+- hw4_sem.cpp: program that use `barrier with semaphore` to complete  
+- hw4_con.cpp: program that use `condition variables` to complete  
+
 ## Building
 
 - Compile
@@ -19,10 +29,10 @@ g++ -g -Wall -o [Output Filename] hw4.cpp
 ```
 
 - Result:  
-![](/result_screenshot/execute_res.png)
+![](https://raw.githubusercontent.com/auyu0408/MPI_hw4/master/result_screenshot/execute_res.png)
 
 - Compare with original Smooth process:
-![](/result_screenshot/diff.png)
+![](https://raw.githubusercontent.com/auyu0408/MPI_hw4/master/result_screenshot/diff.png)
 
 ## Implementation
 
@@ -38,27 +48,27 @@ g++ -g -Wall -o [Output Filename] hw4.cpp
 - Save "output.bmp", get end time.
 - Get total time.
 
-- the barrier method I implement is "busy waiting and mutex".
+- I tried both 3 method and `pthread_barrier_wait()` when doing my homework, all of them have similar result. And the barrier method I implement in homework is "busy waiting and mutex".
 
 ## Result Analysis
 
 - The execution time will be influenced by the number of processor in the computer and the number of thread.  
 - The picture below is the different number of thread with the CPU usage percentage.
   - thread = 2
-    - ![](/result_screenshot/thread_2.png)
+    - ![](https://raw.githubusercontent.com/auyu0408/MPI_hw4/master/result_screenshot/thread_2.png)
   
   - thread = 4
-    - ![](/result_screenshot/thread_4.png)
+    - ![](https://raw.githubusercontent.com/auyu0408/MPI_hw4/master/result_screenshot/thread_4.png)
   
   - thread = 6
-    - ![](/result_screenshot/thread_6.png)
+    - ![](https://raw.githubusercontent.com/auyu0408/MPI_hw4/master/result_screenshot/thread_6.png)
   
   - thread = 8  
-    - ![](/result_screenshot/thread_8.png)
+    - ![](https://raw.githubusercontent.com/auyu0408/MPI_hw4/master/result_screenshot/thread_8.png)
 - We could found that if our thread number < total processor, we can't have the best usage of CPU.
   - If our thread number > total processor, we will split CPU resources equally.
-- However, by the execution time, we found that the smallest time is occur when thread number = 2. But all the other thread still faster then single thread.
-- I guess this is because the mutex instruction will cost a little bit more time, I will try other method later.
+- Then about the execution time, we found that the smallest time is nearly = (single thread)/2.
+- I guess one of the problem is that my computer only have 4 processors, however, I don't know why the execution time is close when thread = 2 and 3.
 
 ## Difficulties
 
