@@ -29,14 +29,15 @@ g++ -g -Wall -o [Output Filename] hw4.cpp
 ```
 
 - Result:  
+  
   - Computer 1
-![](https://raw.githubusercontent.com/auyu0408/MPI_hw4/master/result_screenshot/res_1.png)
+  ![](https://raw.githubusercontent.com/auyu0408/MPI_hw4/master/result_screenshot/res_1.jpg)
 
- - Computer 2
-![](https://raw.githubusercontent.com/auyu0408/MPI_hw4/master/result_screenshot/res_2.png)
+  - Computer 2
+  ![](https://raw.githubusercontent.com/auyu0408/MPI_hw4/master/result_screenshot/res_2.png)
 
 - Compare with original Smooth process:
-![](https://raw.githubusercontent.com/auyu0408/MPI_hw4/master/result_screenshot/diff.png)
+  ![](https://raw.githubusercontent.com/auyu0408/MPI_hw4/master/result_screenshot/diff.png)
 
 ## Implementation
 
