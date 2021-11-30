@@ -23,8 +23,7 @@ void swap(RGBTRIPLE *a, RGBTRIPLE *b);//swap two RGBTRIPLE content
 RGBTRIPLE **alloc_memory( int Y, int X );//allocate a Y * X matrix
 
 int total_thread;//total # of thread
-int counter[2];
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;//critical section locker
+pthread_barrier_t barrier;
 
 //thread entry
 void* thread_routine(void* param)
@@ -45,15 +44,9 @@ void* thread_routine(void* param)
     for(int count = 0; count < NSmooth ; count ++)
     {
         //change BMPSaveData and BMPData
-        if(counter[count%2] == total_thread-1)
-        {
+        if(id == 0)
             swap(BMPSaveData,BMPData);
-            counter[(count+1)%2] = 0;
-        }
-        pthread_mutex_lock(&mutex);
-        counter[count%2] ++;
-        pthread_mutex_unlock(&mutex);
-        while(counter[count%2] < total_thread);
+        pthread_barrier_wait(&barrier);
         //doing smooth
         for(int i = start_pos; i < start_pos + size ; i++)
         {
@@ -70,6 +63,7 @@ void* thread_routine(void* param)
                 BMPSaveData[i][j].rgbRed =  (double) (BMPData[i][j].rgbRed+BMPData[Top][j].rgbRed+BMPData[Top][Left].rgbRed+BMPData[Top][Right].rgbRed+BMPData[Down][j].rgbRed+BMPData[Down][Left].rgbRed+BMPData[Down][Right].rgbRed+BMPData[i][Left].rgbRed+BMPData[i][Right].rgbRed)/9+0.5;
             }
         }
+        pthread_barrier_wait(&barrier);
     }
     return NULL;
 }
@@ -100,9 +94,8 @@ int main(int argc,char *argv[])
     total_thread = strtol(argv[1], NULL, 10);
     thread_handles = (pthread_t *) malloc(total_thread * sizeof(pthread_t));
 
-    //initial barrier and swap counter
-    counter[0] = 0;
-    counter[1] = 0;
+    //initial barrier
+    pthread_barrier_init(&barrier, NULL, (unsigned) total_thread);
 
     //create thread and wait them finished
     for(thread_id = 0; thread_id < total_thread; thread_id++)
@@ -127,6 +120,7 @@ int main(int argc,char *argv[])
     free(BMPSaveData[0]);
     free(BMPData);
     free(BMPSaveData);
+    pthread_barrier_destroy(&barrier);
 
     return 0;
 }

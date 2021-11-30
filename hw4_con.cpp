@@ -23,8 +23,9 @@ void swap(RGBTRIPLE *a, RGBTRIPLE *b);//swap two RGBTRIPLE content
 RGBTRIPLE **alloc_memory( int Y, int X );//allocate a Y * X matrix
 
 int total_thread;//total # of thread
-int counter[2];
+int counter;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;//critical section locker
+pthread_cond_t cond_var;
 
 //thread entry
 void* thread_routine(void* param)
@@ -45,15 +46,18 @@ void* thread_routine(void* param)
     for(int count = 0; count < NSmooth ; count ++)
     {
         //change BMPSaveData and BMPData
-        if(counter[count%2] == total_thread-1)
+        //condition variable
+        pthread_mutex_lock(&mutex);
+        counter++;
+        if(counter == total_thread)
         {
             swap(BMPSaveData,BMPData);
-            counter[(count+1)%2] = 0;
+            counter = 0;
+            pthread_cond_broadcast(&cond_var);
         }
-        pthread_mutex_lock(&mutex);
-        counter[count%2] ++;
+        else
+            while (pthread_cond_wait(&cond_var, &mutex) != 0);
         pthread_mutex_unlock(&mutex);
-        while(counter[count%2] < total_thread);
         //doing smooth
         for(int i = start_pos; i < start_pos + size ; i++)
         {
@@ -99,10 +103,6 @@ int main(int argc,char *argv[])
     pthread_t* thread_handles;
     total_thread = strtol(argv[1], NULL, 10);
     thread_handles = (pthread_t *) malloc(total_thread * sizeof(pthread_t));
-
-    //initial barrier and swap counter
-    counter[0] = 0;
-    counter[1] = 0;
 
     //create thread and wait them finished
     for(thread_id = 0; thread_id < total_thread; thread_id++)

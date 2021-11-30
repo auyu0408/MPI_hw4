@@ -8,6 +8,7 @@
 
 #include <ctime>
 #include <pthread.h>
+#include <semaphore.h>
 using namespace std;
 
 #define NSmooth 1000//smooth time
@@ -23,8 +24,10 @@ void swap(RGBTRIPLE *a, RGBTRIPLE *b);//swap two RGBTRIPLE content
 RGBTRIPLE **alloc_memory( int Y, int X );//allocate a Y * X matrix
 
 int total_thread;//total # of thread
-int counter[2];
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;//critical section locker
+int counter;
+//semaphore
+sem_t count_sem;
+sem_t barrier[2];
 
 //thread entry
 void* thread_routine(void* param)
@@ -45,15 +48,22 @@ void* thread_routine(void* param)
     for(int count = 0; count < NSmooth ; count ++)
     {
         //change BMPSaveData and BMPData
-        if(counter[count%2] == total_thread-1)
+        //barriers with semaphores
+        sem_wait(&count_sem);
+        if(counter == total_thread-1)
         {
-            swap(BMPSaveData,BMPData);
-            counter[(count+1)%2] = 0;
+            swap(BMPSaveData, BMPData);
+            counter = 0;
+            sem_post(&count_sem);
+            for(int k=0;k<total_thread-1; k++)
+                sem_post(&barrier[count%2]);//when one is release, the other will open 
         }
-        pthread_mutex_lock(&mutex);
-        counter[count%2] ++;
-        pthread_mutex_unlock(&mutex);
-        while(counter[count%2] < total_thread);
+        else
+        {
+            counter++;
+            sem_post(&count_sem);
+            sem_wait(&barrier[count%2]);
+        }
         //doing smooth
         for(int i = start_pos; i < start_pos + size ; i++)
         {
@@ -70,6 +80,7 @@ void* thread_routine(void* param)
                 BMPSaveData[i][j].rgbRed =  (double) (BMPData[i][j].rgbRed+BMPData[Top][j].rgbRed+BMPData[Top][Left].rgbRed+BMPData[Top][Right].rgbRed+BMPData[Down][j].rgbRed+BMPData[Down][Left].rgbRed+BMPData[Down][Right].rgbRed+BMPData[i][Left].rgbRed+BMPData[i][Right].rgbRed)/9+0.5;
             }
         }
+        //Barrier
     }
     return NULL;
 }
@@ -92,22 +103,25 @@ int main(int argc,char *argv[])
     else
         cout << "Read file fails!!" << endl;
 
-    //allocate memory to BMPData
+    //allocate memory to BMPData and initialize BMPData
     BMPData = alloc_memory( bmpInfo.biHeight, bmpInfo.biWidth);
 
-    //thread initial
+    //thread initial & semaphore setting
     pthread_t* thread_handles;
     total_thread = strtol(argv[1], NULL, 10);
     thread_handles = (pthread_t *) malloc(total_thread * sizeof(pthread_t));
+    counter = 0;
+    sem_init(&count_sem, 0, 1);
+    sem_init(&barrier[0], 0, 0);//semaphore = 0 represent that it is lock in the beginning
+    sem_init(&barrier[1], 0, 0);
 
-    //initial barrier and swap counter
-    counter[0] = 0;
-    counter[1] = 0;
-
-    //create thread and wait them finished
-    for(thread_id = 0; thread_id < total_thread; thread_id++)
+    //initial barrier and create thread
+    for(thread_id=0; thread_id < total_thread; thread_id++)
+    {
         pthread_create(&thread_handles[thread_id], NULL, thread_routine, (void *)thread_id);
+    }
 
+    //wait thread finished
     for(thread_id=0; thread_id < total_thread; thread_id++)
         pthread_join(thread_handles[thread_id], NULL);
 
@@ -123,6 +137,9 @@ int main(int argc,char *argv[])
     cout<<"We have "<<total_thread<<" thread, the execution time = "<< total <<" s"<<endl;
 
     //free memory
+    sem_destroy(&barrier[1]);
+    sem_destroy(&barrier[0]);
+    sem_destroy(&count_sem);
     free(BMPData[0]);
     free(BMPSaveData[0]);
     free(BMPData);
