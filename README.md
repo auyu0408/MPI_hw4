@@ -1,7 +1,5 @@
 # MPI Hw4 Pthread Smooth
 
-E94086107 張娟鳴
-
 ## File
 
 - bmp.h: bmp picture headerfile   
